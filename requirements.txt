@@ -1,0 +1,4 @@
+psycopg-binary
+tabulate
+prettytable
+dotenv
