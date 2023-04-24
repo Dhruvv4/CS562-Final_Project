@@ -7,7 +7,7 @@ def main():
     needed to run the query. That generated code should be saved to a 
     file (e.g. _generated.py) and then run.
     """
-    input_path = './input/input1.txt'
+    input_path = './input/input2.txt'
     # Reading the input file
     with open(input_path, 'r') as f:
         contents = f.read().split('\n')
@@ -23,8 +23,23 @@ def main():
             db_queries['groupingAttributes'] = contents[idx+1]
         if line == 'F-VECT([F]):':
             db_queries['listOfAggregateFuncs'] = contents[idx+1]
+        if line == 'SELECT CONDITION-VECT([C]):':
+            conditions = []
+            idx_t = idx + 1
+            while True:
+                if (contents[idx_t] == 'HAVING CLAUSE (G):'):
+                    break
+                conditions.append(contents[idx_t])
+                idx_t += 1
+            print(conditions)
+                
+            db_queries['selectConditionVector'] = conditions
         if line == 'HAVING CLAUSE (G):':
+            # print('in having caluse')
             db_queries['havingClause'] = contents[idx+1]
+            having_idx = int(idx)
+            # if db_queries['havingClause'] == '-':
+            #     del db_queries['havingClause']
 
     print(db_queries)
     print(groupingVariables(2))
@@ -41,8 +56,7 @@ def main():
         query += f"""group by {db_queries['groupingAttributes']}\n"""
 
     # This is for having clause (G)
-    print(db_queries['havingClause'])
-    if db_queries['havingClause']:
+    if db_queries['havingClause'] != '-':
         query += f"    having {db_queries['havingClause']};\n"
     
     print(query)

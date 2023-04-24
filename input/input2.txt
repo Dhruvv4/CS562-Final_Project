@@ -1,0 +1,13 @@
+SELECT ATTRIBUTE(S):
+FromAc, FromTel, avg(R.Length), avg(s.Length)
+NUMBER OF GROUPING VARIABLES(n):
+2
+GROUPING ATTRIBUTES(V):
+FromAc, FromTel
+F-VECT([F]):
+-
+SELECT CONDITION-VECT([C]):
+R.To_AC="201" 
+S.To_AC="301" 
+HAVING CLAUSE (G):
+-
