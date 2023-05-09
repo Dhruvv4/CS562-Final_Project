@@ -6,5 +6,5 @@ GROUPING ATTRIBUTES(V):
 cust, prod
 F-VECT([F]):
 avg_quant, max_quant, min_quant, count_quant
-HAVING CLAUSE:
-cust like "A%"
+HAVING CLAUSE (G):
+cust = "Dan"
