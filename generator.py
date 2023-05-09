@@ -1,5 +1,19 @@
+# Database management System 2 Project
+# Current functionality.
+# 1. Fetched all the data.
+# 2. Parsing of the input file and saved in MF_Struct
+# 3. Aggregate functions vaguely implemented.
+#     sum, avg, min, max, count
+# 4. Check with Having clause predicate. 
+    # Need to work on operators - '=', '<', '>', '<=', '>=', '<>', 'in'
+
+# Need to work on
+# 1. Get all columns.
+# 2. Select attributes - 
+
+
 import subprocess
-from helper import readFileByLines, groupingVariables
+from helper import readFileByLines, groupingVariables, get_MF_Struct, get_where_conditions
 
 def main():
     """
@@ -7,74 +21,24 @@ def main():
     needed to run the query. That generated code should be saved to a 
     file (e.g. _generated.py) and then run.
     """
-    input_path = './input/input1.txt'
-    # Reading the input file
-    with open(input_path, 'r') as f:
-        contents = f.read().split('\n')
+    MF_struct = get_MF_Struct('./input/input2a.txt')
+    print(MF_struct)
 
-    db_queries = {}
-
-    for idx, line in enumerate(contents):
-        if line == 'SELECT ATTRIBUTE(S):':
-            db_queries['select'] = contents[idx+1]
-        if line == 'NUMBER OF GROUPING VARIABLES(n):':
-            db_queries['groupingVariables'] = int(contents[idx+1])
-        if line == 'GROUPING ATTRIBUTES(V):':
-            db_queries['groupingAttributes'] = contents[idx+1]
-        if line == 'F-VECT([F]):':
-            db_queries['listOfAggregateFuncs'] = contents[idx+1]
-        if line == 'SELECT CONDITION-VECT([C]):':
-            conditions = []
-            idx_t = idx + 1
-            while True:
-                if (contents[idx_t] == 'HAVING CLAUSE (G):'):
-                    break
-                conditions.append(contents[idx_t])
-                idx_t += 1
-            print(conditions)
-                
-            db_queries['selectConditionVector'] = conditions
-        if line == 'HAVING CLAUSE (G):':
-            # print('in having caluse')
-            db_queries['havingClause'] = contents[idx+1]
-            having_idx = int(idx)
-            # if db_queries['havingClause'] == '-':
-            #     del db_queries['havingClause']
-
-    print(db_queries)
-    print(groupingVariables(2))
-
-    query = f"""
-    SELECT {db_queries['select']}
-    from sales
-    """
-
-    # This is for group by clause, checking whether we have any grouping variables present or no.
-    if db_queries['groupingVariables'] > 0:
-        query += f"""group by {db_queries['groupingAttributes']}{groupingVariables(db_queries['groupingVariables'])}\n"""
-    else:
-        query += f"""group by {db_queries['groupingAttributes']}\n"""
-
-    # This is for having clause (G)
-    if db_queries['havingClause'] != '-':
-        query += f"    having {db_queries['havingClause']};\n"
-    
-    print(query)
-
-    body = """
-
-    #---Variable declaration
+    gv_str = ", ".join([v.strip() for v in MF_struct["groupingAttributes"].split(',')])
+    some_Str = get_where_conditions(gv_str, 3, MF_struct['selectConditionVector'], MF_struct['listOfAggregateFuncs'])
+    print(some_Str)
+    body =f"""#---Variable declaration
     sales_gb_group = defaultdict()
-    db_queries = {}
+    MF_Struct = defaultdict()
     #---end variable Declaration
 
 
-    def get_all_records(cur):
-        get_all_records_query = '''SELECT * from sales;'''
-        # Execute a command: this creates a new table
-        cur.execute(get_all_records_query)
-        all_sales = cur.fetchall()
-        return all_sales
+    # def get_all_records(cur):
+    #     get_all_records_query = '''SELECT * from sales;'''
+    #     # Execute a command: this creates a new table
+    #     cur.execute(get_all_records_query)
+    #     all_sales = cur.fetchall()
+    #     return all_sales
 
     # Fetching all records from sales table
     all_records = get_all_records(cur)
@@ -88,13 +52,13 @@ def main():
     #----Outline Algorithm for reading attributes
     for idx, line in enumerate(contents):
         if line == 'SELECT ATTRIBUTE(S):':
-            db_queries['select'] = contents[idx+1]
+            MF_Struct['select'] = contents[idx+1]
         if line == 'NUMBER OF GROUPING VARIABLES(n):':
-            db_queries['groupingVariables'] = int(contents[idx+1])
+            MF_Struct['groupingVariables'] = int(contents[idx+1])
         if line == 'GROUPING ATTRIBUTES(V):':
-            db_queries['groupingAttributes'] = contents[idx+1]
+            MF_Struct['groupingAttributes'] = contents[idx+1]
         if line == 'F-VECT([F]):':
-            db_queries['listOfAggregateFuncs'] = contents[idx+1]
+            MF_Struct['listOfAggregateFuncs'] = contents[idx+1]
         if line == 'SELECT CONDITION-VECT([C]):':
             conditions = []
             idx_t = idx + 1
@@ -103,31 +67,32 @@ def main():
                     break
                 conditions.append(contents[idx_t])
                 idx_t += 1
-            print(conditions)
                 
-            db_queries['selectConditionVector'] = conditions
+            MF_Struct['selectConditionVector'] = conditions
         if line == 'HAVING CLAUSE (G):':
             # print('in having caluse')
-            db_queries['havingClause'] = contents[idx+1]
+            MF_Struct['havingClause'] = contents[idx+1]
             having_idx = int(idx)
-            # if db_queries['havingClause'] == '-':
-            #     del db_queries['havingClause']
+            # if MF_Struct['havingClause'] == '-':
+            #     del MF_Struct['havingClause']
+    # output.field_names = all_records.split(',')
 
-    print(db_queries)
+    groupTuple = "_".join([v.strip() for v in MF_Struct['groupingAttributes'].split(',')])
 
-    groupList = [col.strip() for col in db_queries['groupingAttributes'].split(",")]
-    groupTuple = tuple(groupList)
-
-
+    # Only select those columns which are in the select attributes of the MF Structure
     for idx, (cust, prod, day, month, year, state, quantC, date) in enumerate(all_records, 1):
-        if  (cust, prod) not in sales_gb_group:
-            sales_gb_group[(cust, prod)] = { 'sumq': 0}
+
+        # Aggregation block
+        if ({gv_str}) in sales_gb_group:
+            sales_gb_group[({gv_str})]['sumq'] += quantC
         else:
-            sales_gb_group[(cust, prod)]['sumq'] += quantC
-    print(sales_gb_group)
+            sales_gb_group[({gv_str})] = dict()
+            sales_gb_group[({gv_str})]['sumq'] = 0
     
     for raw in sales_gb_group.items():
-        _global.append( for col in raw])
+        output.add_row([col for col in raw])
+
+    # print(output)
     """
 
     # Note: The f allows formatting with variables.
@@ -138,9 +103,17 @@ from psycopg2 import Error, connect
 import psycopg2.extras
 import tabulate
 from dotenv import load_dotenv
-#from queryDatabase import get_all_records
+from database.queryDatabase import get_all_records
 load_dotenv()
 from collections import defaultdict
+from prettytable import PrettyTable
+
+
+# for customer, data in sales_gb_cust.items():
+#     row = [customer, data['avgq'], data['maxq']]
+#     output.add_row(row)
+
+
 
 # DO NOT EDIT THIS FILE, IT IS GENERATED BY generator.py
 
@@ -157,13 +130,12 @@ def query():
     cur = conn.cursor()
     cur.execute("SELECT * FROM sales")
     
-    _global = []
+    output = PrettyTable()
     {body}
-    return tabulate.tabulate(_global,
-                        headers="keys", tablefmt="psql")
+    return output
 
 def main():
-    print(query())
+    query()
     
 if "__main__" == __name__:
     main()

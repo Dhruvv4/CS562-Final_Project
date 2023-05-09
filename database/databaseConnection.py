@@ -17,6 +17,12 @@ class DatabaseConfig:
 
 db_cfg = DatabaseConfig()
 
+#---Variable declaration
+sales_gb_group = defaultdict()
+MF_Struct = {}
+#---end variable Declaration
+
+
 # Connection instance
 
 
@@ -79,7 +85,17 @@ for customer, data in sales_gb_cust.items():
     row = [customer, data['avgq'], data['maxq']]
     output.add_row(row)
 
-print(output)
+# print(output)
+
+    # Only select those columns which are in the select attributes of the MF Structure
+for idx, (cust, prod, day, month, year, state, quantC, date) in enumerate(all_records, 1):
+
+    if (cust, prod) not in sales_gb_group:
+        sales_gb_group[(cust, prod)] = { 'sumq': 0}
+    else:
+        sales_gb_group[(cust, prod)]['sumq'] += quantC
+print(sales_gb_group)
+    
 # except (Exception, Error) as error:
 #     print(error)
 #     print("Error while connecting to PostgreSQL", error)

@@ -1,10 +1,10 @@
 SELECT ATTRIBUTE(S):
-cust, avg_quant, max_quant
+cust, prod, month, avg_quant, max_quant
 NUMBER OF GROUPING VARIABLES(n):
 0
 GROUPING ATTRIBUTES(V):
-cust, prod
+cust, prod, month
 F-VECT([F]):
-avg_quant, max_quant, min_quant, count_quant
+avg_quant, max_quant
 HAVING CLAUSE (G):
-cust = "Dan"
+-
