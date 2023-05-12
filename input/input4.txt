@@ -1,0 +1,12 @@
+SELECT ATTRIBUTE(S):
+prod, month, 1_avg_quant, 1_max_quant
+NUMBER OF GROUPING VARIABLES(n):
+2
+GROUPING ATTRIBUTES(V):
+prod, month
+F-VECT([F]):
+1_avg_quant, 1_max_quant
+SELECT CONDITION-VECT([C]):
+1_prod = prod and 1_month = month
+HAVING CLAUSE (G):
+1_avg_quant > 1_max_quant

@@ -1,10 +1,12 @@
 SELECT ATTRIBUTE(S):
-cust, prod, month, avg_quant, max_quant
+cust, prod, month, 1_min_quant, 1_max_quant
 NUMBER OF GROUPING VARIABLES(n):
-0
+3
 GROUPING ATTRIBUTES(V):
 cust, prod, month
 F-VECT([F]):
-avg_quant, max_quant
+1_min_quant, 1_max_quant
+SELECT CONDITION-VECT([C]):
+1_cust = cust and 1_prod = prod and 1_month = month
 HAVING CLAUSE (G):
 -

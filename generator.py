@@ -13,7 +13,7 @@
 
 
 import subprocess
-from helper import readFileByLines, groupingVariables, get_MF_Struct, get_where_conditions
+from helper import readFileByLines, groupingVariables, get_MF_Struct, get_where_conditions, print_MFStruct, get_algorithm
 
 def main():
     """
@@ -21,60 +21,19 @@ def main():
     needed to run the query. That generated code should be saved to a 
     file (e.g. _generated.py) and then run.
     """
-    MF_struct = get_MF_Struct('./input/input2a.txt')
-    print(MF_struct)
-
+    file_no = 4
+    file_path = f'./input/input{file_no}.txt'
+    MF_struct = get_MF_Struct(file_path)
+    # print(MF_struct, end='\n\n')
     gv_str = ", ".join([v.strip() for v in MF_struct["groupingAttributes"].split(',')])
-    some_Str = get_where_conditions(gv_str, 3, MF_struct['selectConditionVector'], MF_struct['listOfAggregateFuncs'])
-    print(some_Str)
+    algorithm = get_algorithm(file_path)
     body =f"""#---Variable declaration
     sales_gb_group = defaultdict()
-    MF_Struct = defaultdict()
     #---end variable Declaration
-
-
-    # def get_all_records(cur):
-    #     get_all_records_query = '''SELECT * from sales;'''
-    #     # Execute a command: this creates a new table
-    #     cur.execute(get_all_records_query)
-    #     all_sales = cur.fetchall()
-    #     return all_sales
 
     # Fetching all records from sales table
     all_records = get_all_records(cur)
-
-    #----Reading Input File
-    input_path = './input/input1.txt'
-    # Reading the input file
-    with open(input_path, 'r') as f:
-        contents = f.read().split('\\n')
-
-    #----Outline Algorithm for reading attributes
-    for idx, line in enumerate(contents):
-        if line == 'SELECT ATTRIBUTE(S):':
-            MF_Struct['select'] = contents[idx+1]
-        if line == 'NUMBER OF GROUPING VARIABLES(n):':
-            MF_Struct['groupingVariables'] = int(contents[idx+1])
-        if line == 'GROUPING ATTRIBUTES(V):':
-            MF_Struct['groupingAttributes'] = contents[idx+1]
-        if line == 'F-VECT([F]):':
-            MF_Struct['listOfAggregateFuncs'] = contents[idx+1]
-        if line == 'SELECT CONDITION-VECT([C]):':
-            conditions = []
-            idx_t = idx + 1
-            while True:
-                if (contents[idx_t] == 'HAVING CLAUSE (G):'):
-                    break
-                conditions.append(contents[idx_t])
-                idx_t += 1
-                
-            MF_Struct['selectConditionVector'] = conditions
-        if line == 'HAVING CLAUSE (G):':
-            # print('in having caluse')
-            MF_Struct['havingClause'] = contents[idx+1]
-            having_idx = int(idx)
-            # if MF_Struct['havingClause'] == '-':
-            #     del MF_Struct['havingClause']
+    
     # output.field_names = all_records.split(',')
 
     groupTuple = "_".join([v.strip() for v in MF_Struct['groupingAttributes'].split(',')])
@@ -83,16 +42,10 @@ def main():
     for idx, (cust, prod, day, month, year, state, quantC, date) in enumerate(all_records, 1):
 
         # Aggregation block
-        if ({gv_str}) in sales_gb_group:
-            sales_gb_group[({gv_str})]['sumq'] += quantC
-        else:
-            sales_gb_group[({gv_str})] = dict()
-            sales_gb_group[({gv_str})]['sumq'] = 0
-    
-    for raw in sales_gb_group.items():
-        output.add_row([col for col in raw])
+        # Here we have to take into account for the aggregate variables and it's corresponding
+        # column.
+        {algorithm}
 
-    # print(output)
     """
 
     # Note: The f allows formatting with variables.
@@ -107,11 +60,8 @@ from database.queryDatabase import get_all_records
 load_dotenv()
 from collections import defaultdict
 from prettytable import PrettyTable
-
-
-# for customer, data in sales_gb_cust.items():
-#     row = [customer, data['avgq'], data['maxq']]
-#     output.add_row(row)
+from helper import get_MF_Struct
+from math import inf
 
 
 
@@ -129,10 +79,16 @@ def query():
     conn = connect(host=host,database=database,user=user,password=password)
     cur = conn.cursor()
     cur.execute("SELECT * FROM sales")
-    
-    output = PrettyTable()
+
+    input_path = f'{file_path}'
+    MF_Struct = get_MF_Struct(input_path)
+
+    cols_name = [x.strip().lower() for x in MF_Struct['select'].split(',')]
+    output = PrettyTable(cols_name)
     {body}
     return output
+
+
 
 def main():
     query()
@@ -142,9 +98,9 @@ if "__main__" == __name__:
     """
 
     # Write the generated code to a file
-    open("_generated.py", "w").write(tmp)
+    open(f"output{file_no}.py", "w").write(tmp)
     # Execute the generated code
-    subprocess.run(["python", "_generated.py"])
+    subprocess.run(["python", f"output{file_no}.py"])
 
 
 if "__main__" == __name__:

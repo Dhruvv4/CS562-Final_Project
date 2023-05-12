@@ -1,13 +1,14 @@
 SELECT ATTRIBUTE(S):
-FromAc, FromTel, avg(R.Length), avg(s.Length)
+CUST, 1_AVG_QUANT, 2_avg_QUANT, 3_avg_QUANT
 NUMBER OF GROUPING VARIABLES(n):
-2
+3
 GROUPING ATTRIBUTES(V):
-FromAc, FromTel
+cust, prod
 F-VECT([F]):
--
+1_AVG_QUANT, 2_avg_QUANT, 3_avg_QUANT
 SELECT CONDITION-VECT([C]):
-R.To_AC="201" 
-S.To_AC="301" 
+1_cust = cust and 1_prod = prod and 1_state = 'NY'
+2_cust = cust and 2_state = 'NJ'
+3_cust = cust and 3_state = 'CT'
 HAVING CLAUSE (G):
--
+1_AVG_QUANT > 2_AVG_QUANT
