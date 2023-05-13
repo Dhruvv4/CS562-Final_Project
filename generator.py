@@ -1,5 +1,5 @@
 import subprocess
-from helper import readFileByLines, groupingVariables, get_MF_Struct, get_where_conditions, print_MFStruct, get_algorithm
+from helper import readFileByLines, groupingVariables, get_MF_Struct, print_MFStruct, get_algorithm
 
 def main():
     """
@@ -7,7 +7,7 @@ def main():
     needed to run the query. That generated code should be saved to a 
     file (e.g. _generated.py) and then run.
     """
-    file_no = 5
+    file_no = 2
     file_path = f'./input/input{file_no}.txt'
     MF_struct = get_MF_Struct(file_path)
     gv_str = ", ".join([v.strip() for v in MF_struct["groupingAttributes"].split(',')])

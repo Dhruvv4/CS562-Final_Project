@@ -1,14 +1,13 @@
 SELECT ATTRIBUTE(S):
-CUST, prod, 1_AVG_QUANT, 2_avg_QUANT, 3_avg_QUANT
+CUST, prod, 1_sum_QUANT, 2_sum_QUANT
 NUMBER OF GROUPING VARIABLES(n):
-3
+2
 GROUPING ATTRIBUTES(V):
 cust, prod
 F-VECT([F]):
-1_AVG_QUANT, 2_avg_QUANT, 3_avg_QUANT
+1_sum_QUANT, 2_sum_QUANT
 SELECT CONDITION-VECT([C]):
-1_cust = cust and 1_state = 'NY'
+1_cust = cust and 1_prod = prod and 1_state = 'NY'
 2_cust = cust and 2_state = 'NJ'
-3_cust = cust and 3_state = 'CT'
 HAVING CLAUSE (G):
-1_AVG_QUANT > 2_AVG_QUANT
+1_sum_QUANT > 2_sum_QUANT
