@@ -7,7 +7,7 @@ prod,month
 F-VECT([F]):
 1_sum_quant, 2_sum_quant
 SELECT CONDITION-VECT([C]):
-1_prod = prod and 2_month = month and 1_state = "NJ"
-2_prod = prod and 2_month = month and 2_state = "NJ"
+1_prod = prod and 1_month = month and 1_state = "NJ"
+2_prod = prod and 2_state = "NJ"
 HAVING CLAUSE (G):
-1_sum_quant < 2_sum_quant
+-
