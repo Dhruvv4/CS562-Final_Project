@@ -84,7 +84,8 @@ def get_MF_Struct(file_path):
 
 def print_MFStruct(MF_struct):
     for key, value in MF_struct.items():
-        print(f"{key} - {value}")
+        print(key)
+        print(value, end='\n')
     print()
 
 def get_aggregate_for(data, gv, type):
@@ -95,26 +96,6 @@ def get_aggregate_for(data, gv, type):
                     groupBy[gv][type] += quantC
             else:
                 groupBy[gv] = {type: 0}
-
-def get_group_from_such_that(such_that: str):
-    groups, where = [], []
-    if 'and' in such_that:
-        result = such_that.split(' and ')
-        for group in result:
-            if '=' in group:
-                res = group.split(' = ')
-                if len(res) == 2 and res[0][2:] == res[1]:
-                    groups.append(res[1])
-                else:
-                    where.append(group[2:].replace('=', '=='))
-    else:
-        if '=' in such_that:
-            res = such_that.split(' = ')
-            if len(res) == 2 and res[0][2:] == res[1]:
-                groups.append(res[1])
-            else:
-                where.append(group[2:].replace('=', '=='))
-    return ", ".join(groups), " and ".join(where)
 
 def get_agg_funcs(agg_funcs: list[str]):
     gv = {}
@@ -149,133 +130,6 @@ def get_group_from_such_that(such_that: str):
                 where.append(group[2:].replace('=', '=='))
     where = [w.replace('quant', 'quantC') if 'quant' in w else w for w in where]
     return ", ".join(groups), " and ".join(where)
-
-def get_where_conditions(file_path):
-    MF_Struct = get_MF_Struct(file_path)
-    n = MF_Struct['groupingVariables']
-    agg_funcs = get_agg_funcs(MF_Struct['listOfAggregateFuncs'])
-    setup_gv = """for i in range(MF_Struct['groupingVariables']):
-    """
-    for i in range(n):
-        if (i == 0):
-            such_that = MF_Struct['selectConditionVector'][i]
-            groups, where = get_group_from_such_that(such_that)
-            agg_func = agg_funcs[i]
-            setup_gv += f"""if i == 0:
-            # Iterate over a list of gv by index and check for gv in sales_gb
-            # get a proper gv along with it's agg func
-            if ({groups}) in sales_gb_group:"""
-
-            for j, agg, col in agg_func:
-                if (agg in ['avg', 'sum']):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] += quantC"""
-                elif (agg == 'max'):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] = max(sales_gb_group[({groups})]['{i+1}_{agg}'], quantC)"""
-                elif (agg == 'min'):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] = min(sales_gb_group[({groups})]['{i+1}_{agg}'], quantC)"""
-                elif (agg == 'count'):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] += 1"""
-                    
-            setup_gv += """else:"""
-            for j, agg, col in agg:
-                # agg = listOfAggFns[i].split('_')[1].lower()
-                if (agg in ['avg', 'sum']):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})] = {{}}
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] = quantC"""
-                elif (agg == 'max'):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})] = {{}}
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] = quantC"""
-                elif (agg == 'min'):
-                    setup_gv += f"""
-                    if {where.replace('=', '==')}:
-                        sales_gb_group[({groups})] = {{}}
-                        sales_gb_group[({groups})]['{i+1}_{agg}'] = quantC"""
-                elif (agg == 'count'):
-                    setup_gv += f"""
-            if {where.replace('=', '==')}:
-                sales_gb_group[({groups})] = {{}}
-                sales_gb_group[({groups})]['{i+1}_{agg}'] += 1"""
-        #         setup_gv = """
-        #         sales_gb_group[{groups}]['{v}'] += quantC    
-        #         sales_gb_group['{groups}'] = {{}}
-        #         sales_gb_group['{groups}']['1_sum'] = quantC
-        # elif i == 1:
-        #     if (prod) in sales_gb_group:
-        #         sales_gb_group[(prod)]['2_sum'] += quantC
-        #     else:
-        #         sales_gb_group[(prod)] = {}
-        #         sales_gb_group[(prod)]['2_sum'] = quantC
-        #     """
-
-    # setup_gv = f"""if ({gv_str}) in sales_gb_group:"""
-
-    
-    # for i in range(len(conditions)):
-    #     agg_func = listOfAggFns[i].split('_')[1].lower()
-    #     # condition = None
-        
-    #     # if '<>' in conditions[i]:
-    #     #     conditions[i].replace('<>', '!=')
-        
-    #     if (agg_func in ['avg', 'sum']):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] += quantC"""
-    #     elif (agg_func == 'max'):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] = max(sales_gb_group[({gv_str})]['{i+1}_{agg_func}'], quantC)"""
-    #     elif (agg_func == 'min'):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] = min(sales_gb_group[({gv_str})]['{i+1}_{agg_func}'], quantC)"""
-    #     elif (agg_func == 'count'):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] += 1"""
-            
-    # setup_gv +=  f"""
-    #     else:"""
-    # for i in range(len(listOfAggFns)):
-    #     agg_func = listOfAggFns[i].split('_')[1].lower()
-    #     if (agg_func in ['avg', 'sum']):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})] = {{}}
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] = quantC"""
-    #     elif (agg_func == 'max'):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})] = {{}}
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] = quantC"""
-    #     elif (agg_func == 'min'):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})] = {{}}
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] = quantC"""
-    #     elif (agg_func == 'count'):
-    #         setup_gv += f"""
-    #         if {conditions[i].replace('=', '==')}:
-    #             sales_gb_group[({gv_str})] = {{}}
-    #             sales_gb_group[({gv_str})]['{i+1}_{agg_func}'] += 1"""
-    # setup_gv = f"""if ({gv_str}) in sales_gb_group:
-    # """
-    # for i in range(no_gv):
-    #     setup_gv += ""
-
-    return setup_gv
 
 def get_algorithm(file_path):
     MF_Struct = get_MF_Struct(file_path)
@@ -326,7 +180,6 @@ def get_algorithm(file_path):
                 sales_gb_group[({groups})]['{i+1}_{agg}'] += 1
                 """
         elif i != 0:
-        #     such_that = MF_Struct['selectConditionVector'][i]
             groups, where = get_group_from_such_that(such_that)
             agg_func = agg_funcs[f"{i + 1}"]
             setup_gv += f"""
@@ -351,7 +204,6 @@ def get_algorithm(file_path):
                 else:
                     sales_gb_group[({groups})] = {{}}"""
             for agg, col in agg_func:
-                # agg = listOfAggFns[i].split('_')[1].lower()
                 if agg in ['avg', 'sum']:
                     setup_gv += f"""
                     sales_gb_group[({groups})]['{i+1}_{agg}'] = quantC"""
@@ -378,9 +230,7 @@ def get_algorithm(file_path):
 
     for idx, a in enumerate(agg):
         agg_func = "_".join(a.split('_')[:-1])
-
         agg_row += f"sales_gb_group[({mapper[a]})]['{agg_func}'],"
-    # print(agg_row)
 
     having_str = ""
     if MF_Struct['havingClause'] != '-':

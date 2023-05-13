@@ -72,9 +72,6 @@ def query():
                 output.add_row([*key] + [sales_gb_group[(key[0],key[1])]['1_sum'],sales_gb_group[(key[0])]['2_sum'],])
         
     print(output)
-    
-
-    
     return output
 
 
